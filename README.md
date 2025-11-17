@@ -70,5 +70,3 @@ Do whatever with it, but no guarantees. If you lose your thesis, not my fault ¯
 ***
 
 Hope it helps keep your stuff safe! 🔐 (emoji necessary)
-
-Enjoy your secure file encryption! 🔐
