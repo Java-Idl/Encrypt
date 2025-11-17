@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AES File Encryption/Decryption</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2a2a2a;
+            --bg-tertiary: #333333;
+            --accent-green: #00d084;
+            --accent-blue: #0088ff;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --error-red: #ff4444;
+            --warning-yellow: #ffbb33;
+            --border-color: #444444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--accent-green);
+            border-bottom-color: var(--accent-green);
+        }
+
+        .tab-content {
+            display: none;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tab-title {
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+        }
+
+        .file-select-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .file-select-btn:hover {
+            border-color: var(--accent-green);
+            background: var(--bg-primary);
+        }
+
+        .file-path {
+            display: block;
+            margin-top: 10px;
+            padding: 10px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            word-break: break-all;
+        }
+
+        .file-path.has-file {
+            color: var(--accent-green);
+        }
+
+        input[type="password"],
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        input[type="password"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-green);
+            background: var(--bg-primary);
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 0.85rem;
+        }
+
+        .char-count {
+            color: var(--text-secondary);
+        }
+
+        .strength-indicator {
+            font-weight: 500;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--accent-green);
+        }
+
+        .checkbox-wrapper label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 400;
+            font-size: 0.9rem;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .action-btn.encrypt-btn {
+            background: var(--accent-green);
+            color: #000;
+        }
+
+        .action-btn.encrypt-btn:hover:not(:disabled) {
+            background: #00b870;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 208, 132, 0.3);
+        }
+
+        .action-btn.decrypt-btn {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+
+        .action-btn.decrypt-btn:hover:not(:disabled) {
+            background: #0077dd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 136, 255, 0.3);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-area {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .status-area.ready {
+            background: rgba(176, 176, 176, 0.1);
+            color: var(--text-secondary);
+        }
+
+        .status-area.processing {
+            background: rgba(255, 187, 51, 0.1);
+            color: var(--warning-yellow);
+        }
+
+        .status-area.success {
+            background: rgba(0, 208, 132, 0.1);
+            color: var(--accent-green);
+        }
+
+        .status-area.error {
+            background: rgba(255, 68, 68, 0.1);
+            color: var(--error-red);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-primary);
+            border-radius: 3px;
+            margin-top: 15px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar.active {
+            display: block;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-green);
+            width: 0;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+
+        .download-btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--accent-green);
+            border-radius: 8px;
+            color: var(--accent-green);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .download-btn.active {
+            display: block;
+        }
+
+        .download-btn:hover {
+            background: var(--accent-green);
+            color: #000;
+        }
+
+        .file-size-info {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .file-size-info.active {
+            display: block;
+        }
+
+        .file-size-info strong {
+            color: var(--text-primary);
+        }
+
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .security-info {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .security-info strong {
+            color: var(--accent-green);
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .tab-content {
+                padding: 20px;
+            }
+
+            .tab {
+                padding: 12px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 AES File Encryption/Decryption</h1>
+            <p class="subtitle">Secure your files with military-grade encryption</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="encrypt">Encrypt</button>
+            <button class="tab" data-tab="decrypt">Decrypt</button>
+        </div>
+
+        <!-- Encrypt Tab -->
+        <div id="encrypt-tab" class="tab-content active">
+            <h2 class="tab-title">Encrypt File</h2>
+            
+            <div class="form-group">
+                <label>Select File</label>
+                <div class="file-input-wrapper">
+                    <button class="file-select-btn" onclick="document.getElementById('encrypt-file-input').click()">
+                        📁 Select File
+                    </button>
+                    <input type="file" id="encrypt-file-input" accept="*/*">
+                    <div class="file-path" id="encrypt-file-path">No file selected</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Password (8-32 characters)</label>
+                <div class="password-wrapper">
+                    <input type="password" id="encrypt-password" placeholder="Enter strong password" maxlength="32">
+                    <div class="password-info">
+                        <span class="strength-indicator" id="encrypt-strength"></span>
+                        <span class="char-count" id="encrypt-char-count">0 / 32</span>
+                    </div>
+                </div>
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="encrypt-show-password">
+                    <label for="encrypt-show-password">Show password</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Output Path</label>
+                <input type="text" id="encrypt-output-path" placeholder="output.enc" readonly>
+            </div>
+
+            <button class="action-btn encrypt-btn" id="encrypt-btn" disabled>
+                🔐 Encrypt File
+            </button>
+
+            <div class="status-area ready" id="encrypt-status">Ready to encrypt</div>
+            <div class="progress-bar" id="encrypt-progress">
+                <div class="progress-fill" id="encrypt-progress-fill"></div>
+            </div>
+            <div class="file-size-info" id="encrypt-size-info"></div>
+            <button class="download-btn" id="encrypt-download-btn">📥 Download Encrypted File</button>
+        </div>
+
+        <!-- Decrypt Tab -->
+        <div id="decrypt-tab" class="tab-content">
+            <h2 class="tab-title">Decrypt File</h2>
+            
+            <div class="form-group">
+                <label>Select File</label>
+                <div class="file-input-wrapper">
+                    <button class="file-select-btn" onclick="document.getElementById('decrypt-file-input').click()">
+                        📁 Select File
+                    </button>
+                    <input type="file" id="decrypt-file-input" accept="*/*">
+                    <div class="file-path" id="decrypt-file-path">No file selected</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="decrypt-password" placeholder="Enter password">
+                </div>
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="decrypt-show-password">
+                    <label for="decrypt-show-password">Show password</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Output Path</label>
+                <input type="text" id="decrypt-output-path" placeholder="output.dec" readonly>
+            </div>
+
+            <button class="action-btn decrypt-btn" id="decrypt-btn" disabled>
+                🔓 Decrypt File
+            </button>
+
+            <div class="status-area ready" id="decrypt-status">Ready to decrypt</div>
+            <div class="progress-bar" id="decrypt-progress">
+                <div class="progress-fill" id="decrypt-progress-fill"></div>
+            </div>
+            <div class="file-size-info" id="decrypt-size-info"></div>
+            <button class="download-btn" id="decrypt-download-btn">📥 Download Decrypted File</button>
+        </div>
+    </div>
+
+    <footer>
+        <div class="security-info">
+            <strong>AES-256-GCM</strong> | PBKDF2: <strong>310,000 iterations</strong> (OWASP 2025)
+        </div>
+        <div class="security-info" style="font-size: 0.8rem; margin-top: 5px;">
+            Security Level: Very High
+        </div>
+    </footer>
+
+    <script>
+        // State management
+        let encryptFile = null;
+        let decryptFile = null;
+        let encryptedBlob = null;
+        let decryptedBlob = null;
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetTab = tab.dataset.tab;
+                
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(`${targetTab}-tab`).classList.add('active');
+            });
+        });
+
+        // Encrypt file input
+        document.getElementById('encrypt-file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                encryptFile = file;
+                document.getElementById('encrypt-file-path').textContent = file.name;
+                document.getElementById('encrypt-file-path').classList.add('has-file');
+                
+                // Auto-generate output filename
+                const outputName = file.name + '.enc';
+                document.getElementById('encrypt-output-path').value = outputName;
+                
+                validateEncryptForm();
+            }
+        });
+
+        // Decrypt file input
+        document.getElementById('decrypt-file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                decryptFile = file;
+                document.getElementById('decrypt-file-path').textContent = file.name;
+                document.getElementById('decrypt-file-path').classList.add('has-file');
+                
+                // Auto-generate output filename
+                let outputName = file.name;
+                if (outputName.endsWith('.enc')) {
+                    outputName = outputName.slice(0, -4) + '.dec';
+                } else {
+                    outputName = outputName + '.dec';
+                }
+                document.getElementById('decrypt-output-path').value = outputName;
+                
+                validateDecryptForm();
+            }
+        });
+
+        // Encrypt password handling
+        const encryptPasswordInput = document.getElementById('encrypt-password');
+        encryptPasswordInput.addEventListener('input', (e) => {
+            const password = e.target.value;
+            const length = password.length;
+            
+            // Update character count
+            document.getElementById('encrypt-char-count').textContent = `${length} / 32`;
+            
+            // Update strength indicator
+            const strengthElem = document.getElementById('encrypt-strength');
+            if (length === 0) {
+                strengthElem.textContent = '';
+            } else if (length < 8) {
+                strengthElem.textContent = '⚠️ Too short';
+                strengthElem.style.color = 'var(--error-red)';
+            } else if (length < 16) {
+                strengthElem.textContent = '🔴 Weak';
+                strengthElem.style.color = 'var(--error-red)';
+            } else if (length < 24) {
+                strengthElem.textContent = '🟡 Medium';
+                strengthElem.style.color = 'var(--warning-yellow)';
+            } else {
+                strengthElem.textContent = '🟢 Strong';
+                strengthElem.style.color = 'var(--accent-green)';
+            }
+            
+            validateEncryptForm();
+        });
+
+        // Show/hide password toggles
+        document.getElementById('encrypt-show-password').addEventListener('change', (e) => {
+            const input = document.getElementById('encrypt-password');
+            input.type = e.target.checked ? 'text' : 'password';
+        });
+
+        document.getElementById('decrypt-show-password').addEventListener('change', (e) => {
+            const input = document.getElementById('decrypt-password');
+            input.type = e.target.checked ? 'text' : 'password';
+        });
+
+        // Decrypt password handling
+        document.getElementById('decrypt-password').addEventListener('input', () => {
+            validateDecryptForm();
+        });
+
+        // Validation
+        function validateEncryptForm() {
+            const hasFile = encryptFile !== null;
+            const password = document.getElementById('encrypt-password').value;
+            const hasValidPassword = password.length >= 8;
+            
+            document.getElementById('encrypt-btn').disabled = !(hasFile && hasValidPassword);
+        }
+
+        function validateDecryptForm() {
+            const hasFile = decryptFile !== null;
+            const password = document.getElementById('decrypt-password').value;
+            const hasPassword = password.length > 0;
+            
+            document.getElementById('decrypt-btn').disabled = !(hasFile && hasPassword);
+        }
+
+        // Encryption function using Web Crypto API
+        async function encryptFileData(fileData, password) {
+            try {
+                const encoder = new TextEncoder();
+                const passwordData = encoder.encode(password);
+                
+                // Generate salt (16 bytes)
+                const salt = crypto.getRandomValues(new Uint8Array(16));
+                
+                // Derive key using PBKDF2 with 310,000 iterations
+                const keyMaterial = await crypto.subtle.importKey(
+                    'raw',
+                    passwordData,
+                    'PBKDF2',
+                    false,
+                    ['deriveBits', 'deriveKey']
+                );
+                
+                const key = await crypto.subtle.deriveKey(
+                    {
+                        name: 'PBKDF2',
+                        salt: salt,
+                        iterations: 310000,
+                        hash: 'SHA-256'
+                    },
+                    keyMaterial,
+                    { name: 'AES-GCM', length: 256 },
+                    false,
+                    ['encrypt']
+                );
+                
+                // Generate nonce (12 bytes for GCM)
+                const nonce = crypto.getRandomValues(new Uint8Array(12));
+                
+                // Encrypt the data
+                const encryptedData = await crypto.subtle.encrypt(
+                    {
+                        name: 'AES-GCM',
+                        iv: nonce
+                    },
+                    key,
+                    fileData
+                );
+                
+                // Combine salt + nonce + encrypted data
+                const result = new Uint8Array(salt.length + nonce.length + encryptedData.byteLength);
+                result.set(salt, 0);
+                result.set(nonce, salt.length);
+                result.set(new Uint8Array(encryptedData), salt.length + nonce.length);
+                
+                return result;
+            } catch (error) {
+                console.error('Encryption error:', error);
+                throw error;
+            }
+        }
+
+        // Decryption function using Web Crypto API
+        async function decryptFileData(encryptedData, password) {
+            try {
+                const encoder = new TextEncoder();
+                const passwordData = encoder.encode(password);
+                
+                // Extract salt, nonce, and encrypted data
+                const salt = encryptedData.slice(0, 16);
+                const nonce = encryptedData.slice(16, 28);
+                const ciphertext = encryptedData.slice(28);
+                
+                // Derive key using PBKDF2 with 310,000 iterations
+                const keyMaterial = await crypto.subtle.importKey(
+                    'raw',
+                    passwordData,
+                    'PBKDF2',
+                    false,
+                    ['deriveBits', 'deriveKey']
+                );
+                
+                const key = await crypto.subtle.deriveKey(
+                    {
+                        name: 'PBKDF2',
+                        salt: salt,
+                        iterations: 310000,
+                        hash: 'SHA-256'
+                    },
+                    keyMaterial,
+                    { name: 'AES-GCM', length: 256 },
+                    false,
+                    ['decrypt']
+                );
+                
+                // Decrypt the data
+                const decryptedData = await crypto.subtle.decrypt(
+                    {
+                        name: 'AES-GCM',
+                        iv: nonce
+                    },
+                    key,
+                    ciphertext
+                );
+                
+                return new Uint8Array(decryptedData);
+            } catch (error) {
+                console.error('Decryption error:', error);
+                throw error;
+            }
+        }
+
+        // Progress animation
+        function animateProgress(progressBarId, progressFillId, duration = 1500) {
+            const progressBar = document.getElementById(progressBarId);
+            const progressFill = document.getElementById(progressFillId);
+            
+            progressBar.classList.add('active');
+            progressFill.style.width = '0%';
+            
+            return new Promise((resolve) => {
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 2;
+                    progressFill.style.width = progress + '%';
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            progressBar.classList.remove('active');
+                            resolve();
+                        }, 300);
+                    }
+                }, duration / 50);
+            });
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // Encrypt button handler
+        document.getElementById('encrypt-btn').addEventListener('click', async () => {
+            const password = document.getElementById('encrypt-password').value;
+            const statusElem = document.getElementById('encrypt-status');
+            const sizeInfoElem = document.getElementById('encrypt-size-info');
+            const downloadBtn = document.getElementById('encrypt-download-btn');
+            const encryptBtn = document.getElementById('encrypt-btn');
+            
+            if (!encryptFile) {
+                statusElem.className = 'status-area error';
+                statusElem.textContent = '❌ Please select a file';
+                return;
+            }
+            
+            if (password.length < 8) {
+                statusElem.className = 'status-area error';
+                statusElem.textContent = '⚠️ Password should be at least 8 characters';
+                return;
+            }
+            
+            try {
+                encryptBtn.disabled = true;
+                statusElem.className = 'status-area processing';
+                statusElem.textContent = 'Encrypting file...';
+                downloadBtn.classList.remove('active');
+                sizeInfoElem.classList.remove('active');
+                
+                // Read file
+                const fileData = await encryptFile.arrayBuffer();
+                
+                // Start progress animation
+                const progressPromise = animateProgress('encrypt-progress', 'encrypt-progress-fill');
+                
+                // Encrypt
+                const encryptedData = await encryptFileData(new Uint8Array(fileData), password);
+                
+                // Wait for progress to complete
+                await progressPromise;
+                
+                // Create blob
+                encryptedBlob = new Blob([encryptedData], { type: 'application/octet-stream' });
+                
+                // Show success
+                statusElem.className = 'status-area success';
+                statusElem.textContent = '✓ File encrypted successfully';
+                
+                // Show file size info
+                sizeInfoElem.innerHTML = `<strong>Original size:</strong> ${formatFileSize(fileData.byteLength)} | <strong>Encrypted size:</strong> ${formatFileSize(encryptedData.byteLength)}`;
+                sizeInfoElem.classList.add('active');
+                
+                // Show download button
+                downloadBtn.classList.add('active');
+                
+            } catch (error) {
+                statusElem.className = 'status-area error';
+                statusElem.textContent = '❌ Encryption failed: ' + error.message;
+            } finally {
+                encryptBtn.disabled = false;
+            }
+        });
+
+        // Decrypt button handler
+        document.getElementById('decrypt-btn').addEventListener('click', async () => {
+            const password = document.getElementById('decrypt-password').value;
+            const statusElem = document.getElementById('decrypt-status');
+            const sizeInfoElem = document.getElementById('decrypt-size-info');
+            const downloadBtn = document.getElementById('decrypt-download-btn');
+            const decryptBtn = document.getElementById('decrypt-btn');
+            
+            if (!decryptFile) {
+                statusElem.className = 'status-area error';
+                statusElem.textContent = '❌ Please select a file';
+                return;
+            }
+            
+            if (password.length === 0) {
+                statusElem.className = 'status-area error';
+                statusElem.textContent = '❌ Please enter a password';
+                return;
+            }
+            
+            try {
+                decryptBtn.disabled = true;
+                statusElem.className = 'status-area processing';
+                statusElem.textContent = 'Decrypting file...';
+                downloadBtn.classList.remove('active');
+                sizeInfoElem.classList.remove('active');
+                
+                // Read file
+                const fileData = await decryptFile.arrayBuffer();
+                
+                // Validate minimum file size (salt + nonce + at least 1 byte)
+                if (fileData.byteLength < 29) {
+                    throw new Error('File appears to be corrupted');
+                }
+                
+                // Start progress animation
+                const progressPromise = animateProgress('decrypt-progress', 'decrypt-progress-fill');
+                
+                // Decrypt
+                const decryptedData = await decryptFileData(new Uint8Array(fileData), password);
+                
+                // Wait for progress to complete
+                await progressPromise;
+                
+                // Create blob
+                decryptedBlob = new Blob([decryptedData], { type: 'application/octet-stream' });
+                
+                // Show success
+                statusElem.className = 'status-area success';
+                statusElem.textContent = '✓ File decrypted successfully';
+                
+                // Show file size info
+                sizeInfoElem.innerHTML = `<strong>Encrypted size:</strong> ${formatFileSize(fileData.byteLength)} | <strong>Decrypted size:</strong> ${formatFileSize(decryptedData.byteLength)}`;
+                sizeInfoElem.classList.add('active');
+                
+                // Show download button
+                downloadBtn.classList.add('active');
+                
+            } catch (error) {
+                statusElem.className = 'status-area error';
+                if (error.name === 'OperationError' || error.message.includes('decryption')) {
+                    statusElem.textContent = '❌ Decryption failed - wrong password or corrupted file';
+                } else {
+                    statusElem.textContent = '❌ ' + error.message;
+                }
+            } finally {
+                decryptBtn.disabled = false;
+            }
+        });
+
+        // Download handlers
+        document.getElementById('encrypt-download-btn').addEventListener('click', () => {
+            if (encryptedBlob) {
+                const url = URL.createObjectURL(encryptedBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = document.getElementById('encrypt-output-path').value;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+
+        document.getElementById('decrypt-download-btn').addEventListener('click', () => {
+            if (decryptedBlob) {
+                const url = URL.createObjectURL(decryptedBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = document.getElementById('decrypt-output-path').value;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+    </script>
+</body>
+</html>
